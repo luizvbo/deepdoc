@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.7.1
+#       jupytext_version: 1.6.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -21,6 +21,12 @@ import pandas as pd
 from tqdm import trange, tqdm
 from datetime import datetime
 import subprocess
+import ast
+
+from ast import (
+    AsyncFunctionDef, FunctionDef, 
+    ClassDef, Module
+)
 
 
 # %% [markdown]
@@ -108,49 +114,50 @@ for i, row in df_repos.iterrows():
 # # Get all .py files
 
 # %%
-if False:
+# %%time
+if True:
     py_files = []
     for root, dirs, files in tqdm(os.walk('../data/repos')):
         for file in files:
             if file.endswith(".py"):
                  py_files.append(os.path.join(root, file))
 else:
-    read
+    pass
 
 # %%
-# %%time
-py_files = subprocess.check_output("find ../data/repos -iname '*.py'", shell=True)
-# [line[2:] for line in subprocess.check_output("find ../data/repos -iname '*.py'", shell=True).splitlines()]
+py_files[1]
 
 # %%
-# %%time 
-py_files = [line[2:] for line in tqdm(py_files.splitlines())]
-
-# %%
-# !ls '../data/repos/facebook|pyaib/pyaib/'
-
-# %%
-py_files = ['../data/repos/aio-libs|aioftp/aioftp/client.py']
-
-# %%
-import ast
-
-fname = py_files[0]
+fname = py_files[1]
 
 with open(fname, 'r') as f:
     tree = ast.parse(f.read())
 ast.get_docstring(tree)
 
-# %%
-tree.body[-1].body[-1].body
 
 # %%
-from ast import (
-    AsyncFunctionDef, FunctionDef, 
-    ClassDef, Module
-)
+def get_functions(tree, functions):
+#     print(type(tree))
+    if isinstance(tree, (AsyncFunctionDef, FunctionDef, 
+                         ClassDef, Module)):
+        if isinstance(tree, (AsyncFunctionDef, FunctionDef)):
+            if ast.get_docstring(tree) is not None:
+                functions.append(tree)
+        for node in tree.body:
+            get_functions(node, functions)
+    return functions
+
 
 # %%
+with open(fname, 'r') as f:
+    tree = ast.parse(f.read())
+
+# %%
+functions = []
+get_functions(tree, functions)
+
+# %%
+[_.name for _ in functions]
 
 # %%
 total_lines = 0
